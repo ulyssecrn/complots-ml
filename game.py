@@ -187,7 +187,7 @@ class Game:
                     claim.was_successful = True
                 else:
                     # Challenge succeeded
-                    self._eliminate_claimed_card(claim.player_id, claim.role)
+                    self._eliminate_card(claim.player_id, claim.role)
                     claim.was_successful = False
             else:
                 # No challenge, claim succeeds
@@ -310,16 +310,6 @@ class Game:
                 self.deck.append(card)
                 random.shuffle(self.deck)
                 break
-
-    def _eliminate_claimed_card(self, player_id: int, role: Role) -> None:
-        """When a player is caught lying, they must choose a card to reveal."""
-        player = self.players[player_id]
-        # Get all non-revealed cards
-        available_cards = [i for i, card in enumerate(player.cards) if not card.revealed]
-        if available_cards:
-            # Let player choose which card to reveal
-            card_index = self._player_choose_card_to_lose(player_id)
-            player.cards[card_index].revealed = True
 
     def _eliminate_card(self, player_id: int) -> None:
         """Let a player choose one of their cards to reveal when losing a challenge."""
