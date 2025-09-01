@@ -119,8 +119,8 @@ class CLIPlayer:
         print("================")
 
     def choose_card_to_lose(self, cards) -> int:
-        """Ask player which card they want to reveal when caught lying."""
-        print("\nYou were caught lying! Choose a card to reveal:")
+        """Ask player which card they want to reveal."""
+        print("\nChoose a card to reveal:")
         available_cards = [(i, card) for i, card in enumerate(cards) if not card.revealed]
         for i, card in available_cards:
             print(f"{i}: {card.role.value}")
