@@ -46,17 +46,6 @@ class CLIPlayer:
             print("Challenge initiated! Resolving...")
         return response
 
-    def announce_challenge_result(self, challenger_id: int, challenged_id: int, role: Role, was_successful: bool):
-        """Display the result of a challenge."""
-        print("\n=== Challenge Result ===")
-        if was_successful:
-            print(f"Player {challenged_id} was LYING about having {role.value}!")
-            print(f"They lose their claimed card.")
-        else:
-            print(f"Player {challenged_id} HAD the {role.value}!")
-            print(f"Player {challenger_id} loses a card.")
-        print("======================")
-
     def wants_to_counter(self, resolution: ActionResolution, possible_roles: List[Role], game_state) -> Optional[Role]:
         """Ask player if they want to counter an action."""
         print(f"\n=== Counter Phase ===")
