@@ -60,7 +60,6 @@ class Game:
         self.players = [Player(f"Player_{i}") for i in range(num_players)]
         self.deck = self._initialize_deck()
         self.current_player_idx = 0
-        self.action_stack = []  # Stack to track action resolution
         self.counters = {
             Action.FOREIGN_AID: [Role.ILLUSIONIST],
             Action.BLACKMAILER: [Role.UNDERTAKER],
