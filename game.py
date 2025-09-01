@@ -155,6 +155,19 @@ class Game:
         """Handle countering phase for an action."""
         possible_counter_roles = self.counters.get(resolution.action, [])
         
+        # Special case for Blackmailer: only target can counter
+        if resolution.action == Action.BLACKMAILER:
+            if resolution.target_id is not None:
+                counter_role = self._player_counters(resolution.target_id, resolution, possible_counter_roles)
+                if counter_role:
+                    resolution.role_claims.append(RoleClaim(
+                        player_id=resolution.target_id,
+                        role=counter_role,
+                        is_counter=True
+                    ))
+            return
+
+        # Normal counter handling for other actions
         for i, player in enumerate(self.players):
             if i != resolution.actor_id and player.is_alive():
                 counter_role = self._player_counters(i, resolution, possible_counter_roles)
@@ -249,18 +262,31 @@ class Game:
             if resolution.target_id is None or current_player.coins < 3:
                 return
             
+            # Check if action was successfully countered
+            if any(claim.was_successful and claim.is_counter 
+                   and claim.role == Role.UNDERTAKER 
+                   for claim in resolution.role_claims):
+                return  # Action is blocked by successful Undertaker counter
+            
             target_player = self.players[resolution.target_id]
-            # Ask target player for their choice
-            if self._player_chooses_pay_blackmail(resolution.target_id):
-                # Target pays 3 coins
-                coins_to_pay = min(3, target_player.coins)
-                target_player.coins -= coins_to_pay
-                current_player.coins += coins_to_pay
-            else:
-                # Target loses a card but gets 3 coins
-                self._eliminate_random_card(resolution.target_id)
+            
+            # If target has less than 3 coins, they must lose a card
+            if target_player.coins < 3:
+                # Let target choose which card to reveal
+                self._eliminate_card(resolution.target_id)
                 target_player.coins += 3
                 current_player.coins -= 3
+            else:
+                # Target can choose to pay or lose a card
+                if self._player_chooses_pay_blackmail(resolution.target_id):
+                    # Target pays 3 coins
+                    target_player.coins -= 3
+                    current_player.coins += 3
+                else:
+                    # Target loses a card but gets 3 coins
+                    self._eliminate_card(resolution.target_id)
+                    target_player.coins += 3
+                    current_player.coins -= 3
 
         elif resolution.action == Action.SPY:
             # Draw new card
