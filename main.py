@@ -1,4 +1,4 @@
-from game import Game, Role, Action
+from game import Game
 from cli_player import CLIPlayer
 
 def main():
