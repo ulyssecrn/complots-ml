@@ -205,13 +205,21 @@ class Game:
                 # No challenge, claim succeeds
                 claim.was_successful = True
 
-        # Action succeeds if initial claim was successful
-        initial_claim = next((claim for claim in resolution.role_claims 
-                            if not claim.is_counter), None)
-        if initial_claim:
-            resolution.successful = initial_claim.was_successful
+        # Action fails if there's a successful counter that wasn't successfully challenged
+        successful_counter = any(claim.is_counter and claim.was_successful 
+                           for claim in resolution.role_claims)
+        
+        # If there's a successful counter, the action fails
+        if successful_counter:
+            resolution.successful = False
         else:
-            resolution.successful = True
+            # Otherwise, action succeeds if initial claim was successful
+            initial_claim = next((claim for claim in resolution.role_claims 
+                                if not claim.is_counter), None)
+            if initial_claim:
+                resolution.successful = initial_claim.was_successful
+            else:
+                resolution.successful = True
 
     def _execute_action(self, resolution: ActionResolution) -> None:
         """Execute the action based on successful claims."""
