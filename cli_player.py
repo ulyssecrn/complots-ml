@@ -121,3 +121,9 @@ class CLIPlayer:
             except ValueError:
                 pass
             print("Invalid choice, try again")
+
+    def wants_to_claim_undertaker_coins(self, available_coins: int) -> bool:
+        """Ask player if they want to claim Undertaker to get coins from dead player."""
+        print(f"\n=== Undertaker Opportunity ===")
+        print(f"A player died with {available_coins} coins.")
+        return input(f"Player {self.player_id}, do you want to claim Undertaker to get a share of the coins? (y/n): ").lower() == 'y'

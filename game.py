@@ -359,6 +359,60 @@ class Game:
             # Let player choose which card to reveal
             card_index = self._player_choose_card_to_lose(player_id)
             player.cards[card_index].revealed = True
+            
+            # Check if player is now dead (both cards revealed)
+            if not player.is_alive():
+                self._handle_player_death(player_id)
+
+    def _handle_player_death(self, dead_player_id: int) -> None:
+        """Handle coin distribution when a player dies."""
+        dead_player = self.players[dead_player_id]
+        if dead_player.coins <= 0:
+            return
+
+        # Ask each player if they want to claim Undertaker for the coins
+        undertaker_claims = []
+        for i, player in enumerate(self.players):
+            if i != dead_player_id and player.is_alive():
+                if self._player_claims_undertaker_coins(i, dead_player_id):
+                    claim = RoleClaim(
+                        player_id=i,
+                        role=Role.UNDERTAKER,
+                        is_counter=False
+                    )
+                    undertaker_claims.append(claim)
+
+        # Handle challenges for undertaker claims
+        for claim in undertaker_claims[:]:  # Use slice copy to avoid modification during iteration
+            for i, player in enumerate(self.players):
+                if i != claim.player_id and player.is_alive():
+                    if self._player_challenges(i, claim):
+                        claim.challenged_by = i
+                        has_role = self._player_has_role(claim.player_id, Role.UNDERTAKER)
+                        if has_role:
+                            # Challenge failed
+                            self._eliminate_card(claim.challenged_by)
+                            self._replace_card(claim.player_id, Role.UNDERTAKER)
+                        else:
+                            # Challenge succeeded
+                            self._eliminate_card(claim.player_id)
+                            undertaker_claims.remove(claim)
+
+        # Distribute coins among successful undertakers
+        successful_undertakers = len(undertaker_claims)
+        if successful_undertakers > 0:
+            coins_per_undertaker = dead_player.coins // successful_undertakers
+            # Distribute coins (remainder is discarded)
+            for claim in undertaker_claims:
+                self.players[claim.player_id].coins += coins_per_undertaker
+            # Remove coins from dead player
+            dead_player.coins = 0
+
+    def _player_claims_undertaker_coins(self, player_id: int, dead_player_id: int) -> bool:
+        """Ask if player wants to claim Undertaker to get coins from dead player."""
+        from cli_player import CLIPlayer
+        cli_player = CLIPlayer(player_id)
+        return cli_player.wants_to_claim_undertaker_coins(self.players[dead_player_id].coins)
 
     def _player_challenges(self, player_id: int, claim: RoleClaim) -> bool:
         from cli_player import CLIPlayer
