@@ -3,7 +3,15 @@ from cli_player import CLIPlayer
 
 def main():
     # Initialize game
-    num_players = int(input("Enter number of players (2-6): "))
+    while True:
+        try:
+            num_players = int(input("Enter number of players (3-6): "))
+            if 3 <= num_players <= 6:
+                break
+            print("Number of players must be between 3 and 6")
+        except ValueError:
+            print("Please enter a valid number")
+    
     game = Game(num_players)
     game.deal_cards()
     

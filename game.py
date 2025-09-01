@@ -57,6 +57,9 @@ class ActionResolution:
 
 class Game:
     def __init__(self, num_players: int):
+        if not 3 <= num_players <= 6:
+            raise ValueError("Number of players must be between 3 and 6")
+            
         self.players = [Player(f"Player_{i}") for i in range(num_players)]
         self.deck = self._initialize_deck()
         self.current_player_idx = 0
