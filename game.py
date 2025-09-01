@@ -286,10 +286,10 @@ class Game:
             
             # If target has less than 3 coins, they must lose a card
             if target_player.coins < 3:
+                current_player.coins -= 3
+                target_player.coins += 3
                 # Let target choose which card to reveal
                 self._eliminate_card(resolution.target_id)
-                target_player.coins += 3
-                current_player.coins -= 3
             else:
                 # Target can choose to pay or lose a card
                 if self._player_chooses_pay_blackmail(resolution.target_id):
@@ -298,9 +298,9 @@ class Game:
                     current_player.coins += 3
                 else:
                     # Target loses a card but gets 3 coins
-                    self._eliminate_card(resolution.target_id)
-                    target_player.coins += 3
                     current_player.coins -= 3
+                    target_player.coins += 3
+                    self._eliminate_card(resolution.target_id)
 
         elif resolution.action == Action.SPY:
             # Draw new card
