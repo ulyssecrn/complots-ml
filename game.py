@@ -221,6 +221,13 @@ class Game:
         if resolution.action == Action.INCOME:
             current_player.coins += 1
 
+        elif resolution.action == Action.COUP:
+            if resolution.target_id is None or current_player.coins < 7:
+                return
+            current_player.coins -= 7
+            # Let target choose which card to reveal
+            self._eliminate_card(resolution.target_id)
+
         elif resolution.action == Action.FOREIGN_AID:
             # Check if any successful counters from illusionists
             if not any(claim.was_successful and claim.is_counter 
