@@ -2,7 +2,7 @@ import random
 
 from enum import Enum
 from dataclasses import dataclass
-from typing import List, Optional, Dict
+from typing import List, Optional, Dict, Set
 
 class Role(Enum):
     ILLUSIONIST = "Illusionist"
@@ -55,11 +55,31 @@ class ActionResolution:
     def __post_init__(self):
         self.role_claims = self.role_claims or []
 
+@dataclass
+class GameState:
+    """Represents the current state of the game."""
+    players: List[Player]
+    current_player_idx: int
+    deck_size: int
+    counters: Dict[Action, List[Role]]
+    known_dead_cards: Set[Role]
+    last_action: Optional[Action] = None
+    last_actor_id: int = -1
+    last_target_id: Optional[int] = None
+    turn_count: int = 0
+
 class Game:
-    def __init__(self, num_players: int):
+    def __init__(self, num_players: int, players=None):
         if not 3 <= num_players <= 6:
             raise ValueError("Number of players must be between 3 and 6")
             
+        # Store player interfaces (CLIPlayer/AIPlayer)
+        if players is None:
+            from cli_player import CLIPlayer
+            players = [CLIPlayer(i) for i in range(num_players)]
+        self.player_interfaces = players
+        
+        # Store player game states
         self.players = [Player(f"Player_{i}") for i in range(num_players)]
         self.deck = self._initialize_deck()
         self.current_player_idx = 0
@@ -67,8 +87,13 @@ class Game:
             Action.FOREIGN_AID: [Role.ILLUSIONIST],
             Action.BLACKMAILER: [Role.UNDERTAKER],
             Action.POPE: [Role.POPE],
-            Action.ILLUSIONIST: [Role.ILLUSIONIST]  # Add this line
+            Action.ILLUSIONIST: [Role.ILLUSIONIST]
         }
+        self.known_dead_cards = set()
+        self.turn_count = 0
+        self.last_action = None
+        self.last_actor_id = -1
+        self.last_target_id = None
     
     def _initialize_deck(self) -> List[Card]:
         deck = []
@@ -112,6 +137,12 @@ class Game:
         if action not in self.get_valid_actions():
             return False
             
+        # Update game state tracking
+        self.last_action = action
+        self.last_actor_id = self.current_player_idx
+        self.last_target_id = target_id
+        self.turn_count += 1
+
         resolution = ActionResolution(
             action=action,
             actor_id=self.current_player_idx,
@@ -349,6 +380,10 @@ class Game:
         player = self.players[player_id]
         for i, card in enumerate(player.cards):
             if card.role == role:
+                # Add old card to known dead cards if player is dead
+                if not player.is_alive():
+                    self.known_dead_cards.add(card.role)
+                # Replace card
                 player.cards[i] = self.deck.pop()
                 self.deck.append(card)
                 random.shuffle(self.deck)
@@ -359,9 +394,12 @@ class Game:
         player = self.players[player_id]
         available_cards = [i for i, card in enumerate(player.cards) if not card.revealed]
         if available_cards:
-            # Let player choose which card to reveal
-            card_index = self._player_choose_card_to_lose(player_id)
-            player.cards[card_index].revealed = True
+            card_index = self.player_interfaces[player_id].choose_card_to_lose(player.cards)
+            revealed_card = player.cards[card_index]
+            revealed_card.revealed = True
+            # Update known dead cards
+            if not player.is_alive():
+                self.known_dead_cards.add(revealed_card.role)
             
             # Check if player is now dead (both cards revealed)
             if not player.is_alive():
@@ -412,35 +450,22 @@ class Game:
             dead_player.coins = 0
 
     def _player_claims_undertaker_coins(self, player_id: int, dead_player_id: int) -> bool:
-        """Ask if player wants to claim Undertaker to get coins from dead player."""
-        from cli_player import CLIPlayer
-        cli_player = CLIPlayer(player_id)
-        return cli_player.wants_to_claim_undertaker_coins(self.players[dead_player_id].coins)
+        return self.player_interfaces[player_id].wants_to_claim_undertaker_coins(self.players[dead_player_id].coins)
 
     def _player_challenges(self, player_id: int, claim: RoleClaim) -> bool:
-        from cli_player import CLIPlayer
-        cli_player = CLIPlayer(player_id)
-        return cli_player.wants_to_challenge(claim, self)
+        return self.player_interfaces[player_id].wants_to_challenge(claim, self.get_game_state())
 
     def _player_counters(self, player_id: int, resolution: ActionResolution, possible_roles: List[Role]) -> Optional[Role]:
-        from cli_player import CLIPlayer
-        cli_player = CLIPlayer(player_id)
-        return cli_player.wants_to_counter(resolution, possible_roles, self)
+        return self.player_interfaces[player_id].wants_to_counter(resolution, possible_roles, self.get_game_state())
 
     def _player_choose_card_to_discard(self, player_id: int) -> int:
-        from cli_player import CLIPlayer
-        cli_player = CLIPlayer(player_id)
-        return cli_player.choose_card_to_discard(self.players[player_id].cards)
+        return self.player_interfaces[player_id].choose_card_to_discard(self.players[player_id].cards)
 
     def _player_wants_redo_spy(self, player_id: int) -> bool:
-        from cli_player import CLIPlayer
-        cli_player = CLIPlayer(player_id)
-        return cli_player.wants_to_redo_spy()
+        return self.player_interfaces[player_id].wants_to_redo_spy(self.get_game_state())
 
     def _player_chooses_pay_blackmail(self, player_id: int) -> bool:
-        from cli_player import CLIPlayer
-        cli_player = CLIPlayer(player_id)
-        return cli_player.chooses_pay_blackmail()
+        return self.player_interfaces[player_id].chooses_pay_blackmail(self.get_game_state())
 
     def is_game_over(self) -> bool:
         """Returns True if only one player remains alive."""
@@ -460,8 +485,16 @@ class Game:
         return any(card.role == role and not card.revealed 
                   for card in player.cards)
     
-    def _player_choose_card_to_lose(self, player_id: int) -> int:
-        """Ask player which card they want to reveal when losing a challenge/card."""
-        from cli_player import CLIPlayer
-        cli_player = CLIPlayer(player_id)
-        return cli_player.choose_card_to_lose(self.players[player_id].cards)
+    def get_game_state(self) -> GameState:
+        """Returns current game state for AI decision making."""
+        return GameState(
+            players=self.players,
+            current_player_idx=self.current_player_idx,
+            deck_size=len(self.deck),
+            counters=self.counters.copy(),
+            known_dead_cards=self.known_dead_cards.copy(),
+            last_action=getattr(self, 'last_action', None),
+            last_actor_id=getattr(self, 'last_actor_id', -1),
+            last_target_id=getattr(self, 'last_target_id', None),
+            turn_count=self.turn_count
+        )

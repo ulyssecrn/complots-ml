@@ -69,7 +69,7 @@ class CLIPlayer:
                 pass
             print("Invalid choice, try again")
 
-    def wants_to_redo_spy(self) -> bool:
+    def wants_to_redo_spy(self, game_state) -> bool:
         """Ask if player wants to redo spy action."""
         return input("Do you want to pay 1 coin to redo the spy action? (y/n): ").lower() == 'y'
 
