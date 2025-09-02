@@ -88,8 +88,11 @@ class CLIPlayer:
     def print_game_state(game_state):
         """Display the current game state."""
         print("\n=== Game State ===")
+        print(f"Turn: {game_state.turn_count}")
         print(f"Current Turn: Player {game_state.current_player_idx}")
+        print(f"Deck size: {game_state.deck_size}")
         print("-------------------")
+        
         for i, player in enumerate(game_state.players):
             # Count alive and dead cards
             alive_cards = [card.role.value for card in player.cards if not card.revealed]
