@@ -73,7 +73,7 @@ class CLIPlayer:
         """Ask if player wants to redo spy action."""
         return input("Do you want to pay 1 coin to redo the spy action? (y/n): ").lower() == 'y'
 
-    def chooses_pay_blackmail(self) -> bool:
+    def chooses_pay_blackmail(self, game_state) -> bool:
         """Ask player if they want to pay the blackmail or lose a card."""
         print("\nYou are being blackmailed!")
         print("1: Pay 3 coins")
