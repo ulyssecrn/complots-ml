@@ -239,13 +239,21 @@ class Game:
                 # No challenge, claim succeeds
                 claim.was_successful = True
 
-        # Action fails if there's a successful counter that wasn't successfully challenged
-        successful_counter = any(claim.is_counter and claim.was_successful 
-                           for claim in resolution.role_claims)
-        
-        # If there's a successful counter, the action fails
-        if successful_counter:
-            resolution.successful = False
+        if resolution.action in [Action.FOREIGN_AID, Action.BLACKMAILER]:
+            # These actions are COMPLETELY BLOCKED by any successful counter
+            successful_counter = any(claim.is_counter and claim.was_successful 
+                                for claim in resolution.role_claims)
+            if successful_counter:
+                resolution.successful = False
+            else:
+                # Check if initial claim was successful (if any)
+                initial_claim = next((claim for claim in resolution.role_claims 
+                                    if not claim.is_counter), None)
+                if initial_claim:
+                    resolution.successful = initial_claim.was_successful
+                else:
+                    resolution.successful = True
+
         else:
             # Otherwise, action succeeds if initial claim was successful
             initial_claim = next((claim for claim in resolution.role_claims 
