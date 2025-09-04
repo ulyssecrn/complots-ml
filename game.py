@@ -467,7 +467,8 @@ class Game:
         return self.player_interfaces[player_id].wants_to_counter(resolution, possible_roles, self.get_game_state())
 
     def _player_choose_card_to_discard(self, player_id: int) -> int:
-        return self.player_interfaces[player_id].choose_card_to_discard(self.players[player_id].cards)
+        alive_cards = [card for card in self.players[player_id].cards if not card.revealed]
+        return self.player_interfaces[player_id].choose_card_to_discard(alive_cards)
 
     def _player_wants_redo_spy(self, player_id: int) -> bool:
         return self.player_interfaces[player_id].wants_to_redo_spy(self.get_game_state())
