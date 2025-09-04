@@ -233,7 +233,7 @@ class Game:
                     claim.was_successful = True
                 else:
                     # Challenge succeeded
-                    self._eliminate_card(claim.player_id, claim.role)
+                    self._eliminate_card(claim.player_id)
                     claim.was_successful = False
             else:
                 # No challenge, claim succeeds
