@@ -450,7 +450,7 @@ class Game:
             dead_player.coins = 0
 
     def _player_claims_undertaker_coins(self, player_id: int, dead_player_id: int) -> bool:
-        return self.player_interfaces[player_id].wants_to_claim_undertaker_coins(self.players[dead_player_id].coins)
+        return self.player_interfaces[player_id].wants_to_claim_undertaker_coins(self.players[dead_player_id].coins, self.get_game_state())
 
     def _player_challenges(self, player_id: int, claim: RoleClaim) -> bool:
         return self.player_interfaces[player_id].wants_to_challenge(claim, self.get_game_state())

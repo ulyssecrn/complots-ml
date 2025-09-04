@@ -39,7 +39,7 @@ class AIStrategy(ABC):
         pass
     
     @abstractmethod
-    def should_claim_undertaker_coins(self, available_coins: int, player_id: int) -> bool:
+    def should_claim_undertaker_coins(self, available_coins: int, game_state, player_id: int) -> bool:
         """Decide whether to claim Undertaker for coins."""
         pass
 
@@ -80,8 +80,8 @@ class BasicStrategy(AIStrategy):
     
     def should_pay_blackmail(self, game_state, player_id: int) -> bool:
         return True
-    
-    def should_claim_undertaker_coins(self, available_coins: int, player_id: int) -> bool:
+
+    def should_claim_undertaker_coins(self, available_coins: int, game_state, player_id: int) -> bool:
         return False
         
     def _choose_coup_target(self, game_state, player_id: int) -> Optional[int]:

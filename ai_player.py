@@ -45,8 +45,8 @@ class AIPlayer:
               f"{'pays 3 coins' if decision else 'loses a card'}")
         return decision
 
-    def wants_to_claim_undertaker_coins(self, available_coins: int) -> bool:
-        decision = self.strategy.should_claim_undertaker_coins(available_coins, self.player_id)
+    def wants_to_claim_undertaker_coins(self, available_coins: int, game_state) -> bool:
+        decision = self.strategy.should_claim_undertaker_coins(available_coins, game_state, self.player_id)
         if decision:
             print(f"AI Player {self.player_id} claims Undertaker for {available_coins} coins")
         return decision

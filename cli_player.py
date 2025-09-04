@@ -125,7 +125,7 @@ class CLIPlayer:
                 pass
             print("Invalid choice, try again")
 
-    def wants_to_claim_undertaker_coins(self, available_coins: int) -> bool:
+    def wants_to_claim_undertaker_coins(self, available_coins: int, game_state) -> bool:
         """Ask player if they want to claim Undertaker to get coins from dead player."""
         print(f"\n=== Undertaker Opportunity ===")
         print(f"A player died with {available_coins} coins.")
