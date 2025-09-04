@@ -1,7 +1,7 @@
 from game import Game
 from cli_player import CLIPlayer
 from ai_player import AIPlayer
-from ai_strategies import BasicStrategy
+from ai_strategies import BasicStrategy, RandomHonestStrategy
 
 def create_players(num_players: int, num_ai_players: int):
     """Create a mix of AI and human players."""
@@ -11,7 +11,7 @@ def create_players(num_players: int, num_ai_players: int):
     players = []
     for i in range(num_players):
         if i < num_ai_players:
-            players.append(AIPlayer(i, BasicStrategy()))
+            players.append(AIPlayer(i, RandomHonestStrategy()))
         else:
             players.append(CLIPlayer(i))
     return players
